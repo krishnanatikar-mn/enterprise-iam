@@ -14,3 +14,5 @@ Implemented entity relationships using JPA annotations such as @OneToOne, @ManyT
 Initialized the Git repository and uploaded the project to GitHub.
 In Progress
 Repository layer implementation.
+
+completed the repository and the DTO package
