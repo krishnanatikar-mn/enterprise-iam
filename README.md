@@ -15,4 +15,11 @@ Initialized the Git repository and uploaded the project to GitHub.
 In Progress 
 Repository layer implementation.
 
-completed the repository and the DTO package
+2. Completed Modules
+Entity Layer
+Created all JPA Entity classes.
+Implemented entity relationships using @OneToMany and @ManyToMany.
+Configured automatic timestamp handling.
+Used Lombok annotations to reduce boilerplate code.
+Repository Layer
+DTO Layer- Request DTOs,Response DTOs
