@@ -45,6 +45,10 @@ public class User {
     private boolean accountExpired = false;
 
     private boolean credentialsExpired = false;
+    
+    public Set<Role> getRoles() {
+        return roles;
+    }
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
