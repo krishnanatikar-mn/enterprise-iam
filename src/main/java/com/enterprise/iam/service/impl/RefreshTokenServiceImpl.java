@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.enterprise.iam.dto.response.JwtResponse;
 import com.enterprise.iam.entity.RefreshToken;
@@ -20,67 +21,106 @@ import lombok.RequiredArgsConstructor;
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
-
     private final JwtService jwtService;
 
     @Override
+    @Transactional
     public String createRefreshToken(User user) {
 
-        String token = UUID.randomUUID().toString();
+        // Remove any previous refresh token for this user
+        refreshTokenRepository.deleteByUser(user);
 
         RefreshToken refreshToken = RefreshToken.builder()
-                .token(token)
+                .token(UUID.randomUUID().toString())
                 .user(user)
                 .expiryDate(LocalDateTime.now().plusDays(7))
+                .revoked(false)
                 .build();
 
         refreshTokenRepository.save(refreshToken);
 
-        return token;
-
+        return refreshToken.getToken();
     }
 
     @Override
     public boolean validateRefreshToken(String refreshToken) {
 
-        return refreshTokenRepository.findByToken(refreshToken)
-
-                .filter(token -> token.getExpiryDate().isAfter(LocalDateTime.now()))
-
+        return refreshTokenRepository
+                .findByToken(refreshToken)
+                .filter(token -> !token.isRevoked())
+                .filter(token -> token.getExpiryDate() != null)
+                .filter(token -> token.getExpiryDate()
+                        .isAfter(LocalDateTime.now()))
                 .isPresent();
-
     }
 
     @Override
-    public JwtResponse generateNewAccessToken(String refreshToken) {
+    public JwtResponse generateNewAccessToken(
+            String refreshToken) {
 
-        RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
+        RefreshToken storedToken = refreshTokenRepository
+                .findByToken(refreshToken)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Invalid refresh token"));
 
-                .orElseThrow(() -> new RuntimeException("Invalid Refresh Token"));
+        if (storedToken.isRevoked()) {
+            throw new RuntimeException(
+                    "Refresh token has been revoked");
+        }
+
+        if (storedToken.getExpiryDate() == null ||
+                storedToken.getExpiryDate()
+                        .isBefore(LocalDateTime.now())) {
+
+            throw new RuntimeException(
+                    "Refresh token has expired");
+        }
+
+        User user = storedToken.getUser();
 
         String accessToken = jwtService.generateToken(
-
-                new CustomUserDetails(token.getUser()));
+                new CustomUserDetails(user));
 
         return JwtResponse.builder()
-
                 .accessToken(accessToken)
-
                 .refreshToken(refreshToken)
-
                 .tokenType("Bearer")
-
                 .build();
-
     }
 
     @Override
-    public void deleteRefreshToken(String refreshToken) {
+    @Transactional
+    public void deleteRefreshToken(
+            String refreshToken) {
 
-        refreshTokenRepository.findByToken(refreshToken)
+        refreshTokenRepository
+                .findByToken(refreshToken)
+                .ifPresent(token -> {
 
-                .ifPresent(refreshTokenRepository::delete);
+                    token.setRevoked(true);
 
+                    refreshTokenRepository.save(token);
+                });
     }
 
+    @Override
+    @Transactional
+    public void deleteRefreshTokenForUser(
+            User user) {
+
+        refreshTokenRepository
+                .findAll()
+                .stream()
+                .filter(token ->
+                        token.getUser() != null &&
+                        token.getUser().getId()
+                                .equals(user.getId()))
+                .forEach(token -> {
+
+                    token.setRevoked(true);
+
+                    refreshTokenRepository.save(token);
+                });
+    }
 }

@@ -13,4 +13,5 @@ public interface RefreshTokenService {
 
     void deleteRefreshToken(String refreshToken);
 
+    void deleteRefreshTokenForUser(User user);
 }

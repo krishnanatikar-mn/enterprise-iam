@@ -2,6 +2,7 @@ package com.enterprise.iam.controller;
 
 import com.enterprise.iam.dto.request.ForgotPasswordRequest;
 import com.enterprise.iam.dto.request.LoginRequest;
+import com.enterprise.iam.dto.request.RefreshTokenRequest;
 import com.enterprise.iam.dto.request.RegisterRequest;
 import com.enterprise.iam.dto.request.ResetPasswordRequest;
 import com.enterprise.iam.dto.request.VerifyOtpRequest;
@@ -35,8 +36,11 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public JwtResponse refreshToken(@RequestParam String refreshToken) {
-        return authService.refreshToken(refreshToken);
+    public JwtResponse refreshToken(
+            @RequestBody RefreshTokenRequest request) {
+
+        return authService.refreshToken(
+                request.getRefreshToken());
     }
 
     @PostMapping("/forgot-password")
