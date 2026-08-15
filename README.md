@@ -41,3 +41,5 @@ Project Progress (07-Aug-2026)
 
 Current Status
 Working on completing business logic for Authentication, Refresh Token, OTP verification, and Spring Security integration.
+
+Enterprise IAM project completed with a structured, secure, and scalable authentication and authorization system. The project includes user management, role and permission management, JWT-based authentication, refresh token handling, OTP-based password recovery, login history, audit logging, and secure API endpoints. The application follows a layered Spring Boot architecture with controllers, services, repositories, DTOs, entities, and exception handling.
